@@ -129,6 +129,8 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -163,6 +165,9 @@ def main():
                     # 撃墜＝Noneにする
                     beam = None
                     bomb = None
+                    bird.change_img(6, screen)
+                    pg.display.update()
+                    time.sleep(1) 
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)

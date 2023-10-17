@@ -141,6 +141,32 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
+class Explosion:
+    # 爆発を演出するクラス
+
+    def __init__(self, center, life):
+        # イニシャライザ
+        self.images = [
+            pg.image.load("ex03/fig/explosion.gif"),
+            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), True, False),
+            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), False, True),
+            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), True, True)
+        ]
+        self.rct = self.images[0].get_rect()
+        self.rct.center = center
+        self.life = life
+        self.frame = 0
+
+    def update(self, screen: pg.Surface):
+        # 爆発経過時間を1減算
+        self.life -= 1
+
+        # 爆発のアニメーションを描画
+        if self.life > 0:
+            screen.blit(self.images[self.frame], self.rct)
+            self.frame = (self.frame + 1) % len(self.images)
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -148,6 +174,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]
     beam = None
+    explosions = []
 
     clock = pg.time.Clock()
     tmr = 0
@@ -161,6 +188,17 @@ def main():
 
         
         screen.blit(bg_img, [0, 0])
+
+        # 爆弾とBeamの衝突をチェック
+        for beam in beam:
+            if beam.rct.colliderect(bomb.rct):
+                explosions.append(Explosion(bomb.rct.center, 20))  # 爆発インスタンスを生成
+                beam.remove(beam)
+
+        # 爆発を描画
+        explosions = [explosion for explosion in explosions if explosion.life > 0]
+        for explosion in explosions:
+            explosion.update(screen)
         
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):

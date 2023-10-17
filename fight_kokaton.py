@@ -140,31 +140,27 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
-
 class Explosion:
-    # 爆発を演出するクラス
-
-    def __init__(self, center, life):
-        # イニシャライザ
-        self.images = [
-            pg.image.load("ex03/fig/explosion.gif"),
-            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), True, False),
-            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), False, True),
-            pg.transform.flip(pg.image.load("ex03/fig/explosion.gif"), True, True)
-        ]
-        self.rct = self.images[0].get_rect()
-        self.rct.center = center
-        self.life = life
-        self.frame = 0
+    def __init__(self, center):
+        img = pg.image.load("ex03/fig/explosion.gif")
+        self.images = [img,
+                       pg.transform.flip(img, True, False),
+                       pg.transform.flip(img, False, True),
+                       pg.transform.flip(img, True, True)]
+        self.current_image = 0
+        self.image = self.images[self.current_image]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.life = len(self.images) * 10  # 画像リストの長さ x 10フレーム
 
     def update(self, screen: pg.Surface):
-        # 爆発経過時間を1減算
-        self.life -= 1
-
-        # 爆発のアニメーションを描画
         if self.life > 0:
-            screen.blit(self.images[self.frame], self.rct)
-            self.frame = (self.frame + 1) % len(self.images)
+            # 画像を交互に切り替える
+            if self.life % 10 == 0:
+                self.current_image = (self.current_image + 1) % len(self.images)
+                self.image = self.images[self.current_image]
+            screen.blit(self.image, self.rect)
+            self.life -= 1
 
 
 def main():
@@ -188,17 +184,6 @@ def main():
 
         
         screen.blit(bg_img, [0, 0])
-
-        # 爆弾とBeamの衝突をチェック
-        for beam in beam:
-            if beam.rct.colliderect(bomb.rct):
-                explosions.append(Explosion(bomb.rct.center, 20))  # 爆発インスタンスを生成
-                beam.remove(beam)
-
-        # 爆発を描画
-        explosions = [explosion for explosion in explosions if explosion.life > 0]
-        for explosion in explosions:
-            explosion.update(screen)
         
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
@@ -210,12 +195,18 @@ def main():
         for i, bomb in enumerate(bombs):
             if beam is not None:
                 if beam.rct.colliderect(bomb.rct):  # ビームと爆弾の衝突判定
+                    explosions.append(Explosion(bomb.rct.center))
                     # 撃墜＝Noneにする
                     beam = None
                     bombs[i] = None
                     bird.change_img(6, screen)
                     pg.display.update()
-        bombs = [bomb for bomb in bombs if bomb is not None]                        
+        bombs = [bomb for bomb in bombs if bomb is not None]
+           
+        for explosion in explosions:
+            explosion.update(screen)
+        explosions = [explosion for explosion in explosions if explosion.life > 0]
+
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)

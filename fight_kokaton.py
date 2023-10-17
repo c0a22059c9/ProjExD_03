@@ -35,7 +35,6 @@ class Bird:
         pg.K_RIGHT: (+5, 0),
     }
 
-
     def __init__(self, num: int, xy: tuple[int, int]):
         """
         こうかとん画像Surfaceを生成する
@@ -59,7 +58,6 @@ class Bird:
         self.rct.center = xy
         self.dire = (+5, 0)
 
-
     def change_img(self, num: int, screen: pg.Surface):
         """
         こうかとん画像を切り替え，画面に転送する
@@ -68,7 +66,6 @@ class Bird:
         """
         self.img = pg.transform.rotozoom(pg.image.load(f"ex03/fig/{num}.png"), 0, 2.0)
         screen.blit(self.img, self.rct)
-
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -93,8 +90,6 @@ class Bird:
 
 
 class Beam:
-
-
     def __init__(self, bird: Bird):
         """
         ビーム画像Surfaceを生成する
@@ -118,7 +113,6 @@ class Beam:
         self.rct.centery = bird.rct.centery + bird.rct.height * vy / 5
         self.vx, self.vy = vx, vy
 
-
     def update(self, screen: pg.Surface):
         """
         ビームを速度vxにしたがって移動させる
@@ -135,7 +129,6 @@ class Bomb:
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
     directions = [-5, +5]
 
-
     def __init__(self):
         """
         ランダムな色，サイズの爆弾円Surfaceを生成する
@@ -149,7 +142,6 @@ class Bomb:
         self.rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
         self.vx = random.choice(__class__.directions)
         self.vy = random.choice(__class__.directions)
-
 
     def update(self, screen: pg.Surface):
         """
@@ -166,8 +158,6 @@ class Bomb:
 
 
 class Explosion:
-
-
     def __init__(self, center):
         img = pg.image.load("ex03/fig/explosion.gif")#爆発画像
         self.images = [img,
@@ -178,8 +168,7 @@ class Explosion:
         self.image = self.images[self.current_image]
         self.rect = self.image.get_rect()
         self.rect.center = center
-        self.life = len(self.images) * 5  # 画像リストの長さ x 10フレーム表示
-
+        self.life = len(self.images) * 10  # 画像リストの長さ x 10フレーム表示
 
     def update(self, screen: pg.Surface):
         if self.life > 0:
@@ -192,8 +181,6 @@ class Explosion:
 
 
 class Score:
-
-
     def __init__(self):
         self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
         self.color = (0, 0, 255)
@@ -201,7 +188,6 @@ class Score:
         self.img = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.img.get_rect()
         self.rect.topleft = (100, HEIGHT - 50)
-
 
     def update(self, screen):
         self.img = self.font.render(f"Score: {self.value}", 0, self.color)
@@ -215,6 +201,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]
     beam = None
+    beams = []  # 1. Beamクラスのインスタンスを複数扱うための空のリストを作る
     explosions = []
     score = Score()
 
@@ -227,6 +214,9 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # キーが押されたら，かつ，キーの種類がスペースキーだったら
                 beam = Beam(bird)
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                # キーが押されたら，かつ，キーの種類がスペースキーだったら
+                beams.append(Beam(bird))  # 2. ビームを`beams`リストに追加
 
         
         screen.blit(bg_img, [0, 0])
@@ -254,7 +244,20 @@ def main():
             explosion.update(screen)
         explosions = [explosion for explosion in explosions if explosion.life > 0]
 
-
+        for beam in beams:
+            for i, bomb in enumerate(bombs):
+                if beam.rct.colliderect(bomb.rct):  # ビームと爆弾の衝突判定
+                    explosions.append(Explosion(bomb.rct.center))
+                    bombs[i] = None
+                    bird.change_img(6, screen)
+                    pg.display.update()
+                    score.value += 1  # 爆弾を打ち落としたらスコアアップ
+                    beams.remove(beam)  # 2. 爆弾と衝突したらリストからビームを削除
+            if not check_bound(beam.rct)[0] or not check_bound(beam.rct)[1]:
+                beams.remove(beam)
+        for beam in beams:
+            beam.update(screen)
+              
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         for bomb in bombs:

@@ -218,7 +218,6 @@ def main():
     beams = []  # 1. Beamクラスのインスタンスを複数扱うための空のリストを作る
     explosions = []
     score = Score()
-
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -289,3 +288,5 @@ if __name__ == "__main__":
     main()
     pg.quit()
     sys.exit()
+
+    

@@ -34,12 +34,24 @@ class Bird:
         pg.K_RIGHT: (+5, 0),
     }
 
+    move_images = {
+        (0, -5): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), -90, 2.0),
+        (+5, -5): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), -135, 2.0),
+        (+5, 0): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), 0, 2.0),
+        (+5, +5): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), 45, 2.0),
+        (0, +5): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), 90, 2.0),
+        (-5, +5): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), 135, 2.0),
+        (-5, 0): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), 180, 2.0),
+        (-5, -5): pg.transform.rotozoom(pg.image.load("ex03/fig/3.png"), -45, 2.0),
+    }
+
     def __init__(self, num: int, xy: tuple[int, int]):
         """
         こうかとん画像Surfaceを生成する
         引数1 num：こうかとん画像ファイル名の番号
         引数2 xy：こうかとん画像の位置座標タプル
         """
+        
         self.img = pg.transform.flip(  # 左右反転
             pg.transform.rotozoom(  # 2倍に拡大
                 pg.image.load(f"ex03/fig/{num}.png"), 
@@ -50,6 +62,37 @@ class Bird:
         )
         self.rct = self.img.get_rect()
         self.rct.center = xy
+        
+
+    def change_img(self, num: int, screen: pg.Surface):
+        """
+        こうかとん画像を切り替え，画面に転送する
+        引数1 num：こうかとん画像ファイル名の番号
+        引数2 screen：画面Surface
+        """
+        self.img = pg.transform.rotozoom(pg.image.load(f"ex03/fig/{num}.png"), 0, 2.0)
+        screen.blit(self.img, self.rct)
+
+    def update(self, key_lst: list[bool], screen: pg.Surface):
+        """
+        押下キーに応じてこうかとんを移動させる
+        引数1 key_lst：押下キーの真理値リスト
+        引数2 screen：画面Surface
+        """
+        sum_mv = [0, 0]
+        for k, mv in __class__.delta.items():
+            if key_lst[k]:
+                sum_mv[0] += mv[0]
+                sum_mv[1] += mv[1]
+        self.rct.move_ip(sum_mv)
+        if check_bound(self.rct) != (True, True):
+            self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+
+        # 移動量に応じた画像を選択
+        image_to_blit = Bird.move_images.get(tuple(sum_mv), self.img)
+        
+        # 画像をblit
+        screen.blit(image_to_blit, self.rct)
 
 
 class Bomb:

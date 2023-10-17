@@ -51,31 +51,6 @@ class Bird:
         self.rct = self.img.get_rect()
         self.rct.center = xy
 
-    def change_img(self, num: int, screen: pg.Surface):
-        """
-        こうかとん画像を切り替え，画面に転送する
-        引数1 num：こうかとん画像ファイル名の番号
-        引数2 screen：画面Surface
-        """
-        self.img = pg.transform.rotozoom(pg.image.load(f"ex03/fig/{num}.png"), 0, 2.0)
-        screen.blit(self.img, self.rct)
-
-    def update(self, key_lst: list[bool], screen: pg.Surface):
-        """
-        押下キーに応じてこうかとんを移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
-        """
-        sum_mv = [0, 0]
-        for k, mv in __class__.delta.items():
-            if key_lst[k]:
-                sum_mv[0] += mv[0]
-                sum_mv[1] += mv[1]
-        self.rct.move_ip(sum_mv)
-        if check_bound(self.rct) != (True, True):
-            self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        screen.blit(self.img, self.rct)
-
 
 class Bomb:
     """
@@ -108,12 +83,29 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
+class Beam:
+    # Beamに関するクラス
+
+    def __init__(self, bird_rect: pg.Rect):
+        # 引数に基づいてbeam.pngのSurfaceを生成
+        self.img = pg.image.load("ex03/fig/beam.png")
+        self.rct = self.img.get_rect()
+        self.rct.topleft = (bird_rect.right, bird_rect.centery)
+        self.vx, self.vy = 5, 0
+
+    def update(self, screen: pg.Surface):
+        # 初期位置から右に移動して画面Surfaceにblit
+        self.rct.move_ip(self.vx, self.vy)
+        screen.blit(self.img, self.rct)
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("ex03/fig/pg_bg.jpg")
     bird = Bird(3, (900, 400))
     bomb = Bomb((255, 0, 0), 10)
+    beams = []
 
     clock = pg.time.Clock()
     tmr = 0
@@ -123,6 +115,9 @@ def main():
                 return
         
         screen.blit(bg_img, [0, 0])
+
+        for beam in beams:
+            beam.update(screen)
         
         if bird.rct.colliderect(bomb.rct):
             # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
@@ -131,6 +126,19 @@ def main():
             time.sleep(1)
             return
 
+        key_lst = pg.key.get_pressed()
+        bird.update(key_lst, screen)
+        bomb.update(screen)
+
+        # スペースキー押下でBeamインスタンスを生成
+        if key_lst[pg.K_SPACE]:
+            beam = Beam(bird.rct)
+            beams.append(beam)
+
+        # Beamインスタンスを更新して画面にblit
+        for beam in beams:
+            beam.update(screen)
+        
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         bomb.update(screen)
@@ -144,3 +152,4 @@ if __name__ == "__main__":
     main()
     pg.quit()
     sys.exit()
+ 

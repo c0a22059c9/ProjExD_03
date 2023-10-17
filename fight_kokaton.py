@@ -140,9 +140,10 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
+
 class Explosion:
     def __init__(self, center):
-        img = pg.image.load("ex03/fig/explosion.gif")
+        img = pg.image.load("ex03/fig/explosion.gif")#爆発画像
         self.images = [img,
                        pg.transform.flip(img, True, False),
                        pg.transform.flip(img, False, True),
@@ -151,7 +152,7 @@ class Explosion:
         self.image = self.images[self.current_image]
         self.rect = self.image.get_rect()
         self.rect.center = center
-        self.life = len(self.images) * 10  # 画像リストの長さ x 10フレーム
+        self.life = len(self.images) * 10  # 画像リストの長さ x 10フレーム表示
 
     def update(self, screen: pg.Surface):
         if self.life > 0:
